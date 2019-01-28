@@ -41,10 +41,9 @@ def main():
                 dropout=args.dropout,
                 img_feature_dim=args.img_feature_dim,
                 partial_bn=not args.no_partialbn)
-#     freeze cnn
-#     _, cnn =list(model.named_children())[0]
-#     for p in cnn.parameters():
-#         p.requires_grad = False
+    _, cnn =list(model.named_children())[0]
+    for p in cnn.parameters():
+        p.requires_grad = False
 
     crop_size = model.crop_size
     scale_size = model.scale_size
@@ -59,9 +58,8 @@ def main():
     checkpoint = torch.load('/home/ec2-user/mit_weights.pth.tar')
     model.load_state_dict(checkpoint['state_dict'])
     
-#     only if transfer learning
-#     for module in list(list(model._modules['module'].children())[-1].children())[-1].children():
-#         module[-1] = nn.Linear(256, num_class)
+    for module in list(list(model._modules['module'].children())[-1].children())[-1].children():
+        module[-1] = nn.Linear(256, num_class)
 
     if args.resume:
         if os.path.isfile(args.resume):
@@ -74,11 +72,9 @@ def main():
                   .format(args.evaluate, checkpoint['epoch'])))
         else:
             print(("=> no checkpoint found at '{}'".format(args.resume)))
-    
-    model.cuda()
-    model.train(True)
 
     cudnn.benchmark = True
+    model.cuda()
 
     # Data loading code
     if args.modality != 'RGBDiff':
@@ -132,10 +128,7 @@ def main():
             group['name'], len(group['params']), group['lr_mult'], group['decay_mult'])))
         
     optimizer = torch.optim.Adam(model.parameters(), args.lr)
-#     optimizer = torch.optim.SGD(policies,
-#                                 args.lr,
-#                                 momentum=args.momentum,
-#                                 weight_decay=args.weight_decay)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 8, gamma=0.1, last_epoch=-1)
 
     if args.evaluate:
         validate(val_loader, model, criterion, 0)
@@ -143,8 +136,7 @@ def main():
 
     log_training = open(os.path.join(args.root_log, '%s.csv' % args.store_name), 'w')
     for epoch in range(args.start_epoch, args.epochs):
-        # adjust_learning_rate(optimizer, epoch, args.lr_steps)
-
+        scheduler.step()
         # train for one epoch
         train(train_loader, model, criterion, optimizer, epoch, log_training)
 
