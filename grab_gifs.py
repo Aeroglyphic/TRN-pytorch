@@ -13,13 +13,11 @@ logging.basicConfig(
     format='%(asctime)s:%(levelname)s: %(message)s',
     level=logging.INFO
 )
+REPO_PATH = '/home/ubuntu/dvoitekh/TRN-pytorch'
+OUTPUT_PATH = f'{REPO_PATH}/dataset'
 
-OUTPUT_PATH = '/home/ec2-user/gifs'
-
-# gifs2cat = pd.read_csv('/home/ec2-user/gifs2cat.csv')
-# gifs2cat = gifs2cat.groupby('gif_id')['category'].apply(list)
 # gifs2cat = pd.read_csv('/home/ec2-user/reactions.csv')
-payload = pickle.load(open('/home/ec2-user/siamese_dataset.pkl', 'rb'))
+payload = pickle.load(open(f'{REPO_PATH}/siamese_dataset.pkl', 'rb'))
 gifs = []
 for x in payload:
     gifs.extend(list(x))
@@ -74,7 +72,9 @@ def save_gif(id):
     if gif is not None:
         os.mkdir(directory)
         frames = list(gif.iter_frames())
-        for i, x in enumerate(evenly_spaced_sampling(frames, 50)):
+        if len(frames) < 8 or len(frames) > 50:
+            frames = evenly_spaced_sampling(frames, 50)
+        for i, x in enumerate(frames):
             Image.fromarray(x).save(os.path.join(directory, f'{i}.jpg'))
         del gif
 
@@ -82,4 +82,3 @@ def save_gif(id):
 print('Total gifs:', len(gifs))
 with Pool(processes=16) as executor:
     executor.map(save_gif, gifs)
-#     executor.map(save_gif, gifs2cat.index)

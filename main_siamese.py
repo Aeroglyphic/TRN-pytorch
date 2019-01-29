@@ -74,7 +74,7 @@ def main():
     args.store_name = '_'.join(['TRN', args.dataset, args.modality, args.arch, args.consensus_type, 'segment%d'% args.num_segments])
     print('storing name: ' + args.store_name)
 
-    model = TSN(339, args.num_segments, args.modality,
+    model = TSN(64, args.num_segments, args.modality,
                 base_model=args.arch,
                 consensus_type=args.consensus_type,
                 dropout=args.dropout,
@@ -95,10 +95,10 @@ def main():
     model = torch.nn.DataParallel(model, device_ids=args.gpus).cuda()
     
     # remove if not transfer learning (this is pretrained TRN model taken from here: http://relation.csail.mit.edu/models/TRN_moments_RGB_InceptionV3_TRNmultiscale_segment8_best_v0.4.pth.tar)    
-    checkpoint = torch.load('/home/ec2-user/mit_weights.pth.tar')
+    checkpoint = torch.load('/home/ubuntu/dvoitekh/TRN_custom_RGB_InceptionV3_TRNmultiscale_segment8_best.pth.tar')
     model.load_state_dict(checkpoint['state_dict'])
-    for module in list(list(model._modules['module'].children())[-1].children())[-1].children():
-        module[-1] = nn.Linear(256, 64)
+#     for module in list(list(model._modules['module'].children())[-1].children())[-1].children():
+#         module[-1] = nn.Linear(256, 64)
 
     if args.resume:
         if os.path.isfile(args.resume):
@@ -187,7 +187,7 @@ def main():
 
             # remember best loss and save checkpoint
             is_best = loss < best_loss
-            best_loss = min(prec1, best_loss)
+            best_loss = min(loss, best_loss)
             save_checkpoint({
                 'epoch': epoch + 1,
                 'arch': args.arch,

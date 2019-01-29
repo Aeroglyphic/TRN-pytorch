@@ -45,4 +45,4 @@ class SiameseDataset(TSNDataSet):
         return record.path, process_data, record.label, index
     
     def __len__(self):
-        return len(self.video_list) * 4
+        return len(self.video_list)
